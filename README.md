@@ -27,8 +27,3 @@ npm run lint
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
 
-
-
-## TODO
-- Write provider instead of hijacking metamask
-- make web3 store-based. 

@@ -1,6 +1,7 @@
 <template>
 <div>
-    <button @click="connectWallet" :disabled="isConnected || !isWalletInstalled">
+    {{$store.state.currentAccount}}
+    <button @click="connectWallet" :disabled="isConnected || !isEthereumSupported">
         {{connectButtonText}}
     </button>
 
@@ -34,10 +35,10 @@
 
 <script>
 import raffle from "../contracts/raffle";
-import web3 from "../web3";
+import {web3, isEthereumSupported} from "../web3"; 
 
 // TODO: callbacks (e.g., refresh the # players, etc), 
-// add raffle, lastWinner to contract, disconnect event, loading icons
+// add raffle, lastWinner to contract, loading icons
 
 export default {
   name: "Raffle",
@@ -49,8 +50,6 @@ export default {
       ticketPrice: "0",
       numTickets: 1,
       loading: false,
-      connectedAccounts: [],
-      thing: null,
     };
   },
   computed: {
@@ -67,20 +66,21 @@ export default {
         "ether"
       );
     },
-    isWalletInstalled() {
-      return typeof window.ethereum !== "undefined";
-    },
     isConnected() {
-      return this.connectedAccounts.length > 0;
+      return this.$store.state.currentAccount !==undefined;
     },
     connectButtonText() {
-        if(!this.isWalletInstalled){
-            return 'Please install MetaMask'
+        if(!isEthereumSupported){
+            return 'Please install MetaMask or another wallet'
         } else if (this.isConnected) {
-            return 'Connected to ' + this.connectedAccounts[0].slice(0, 8)
+            return 'Connected to ' + this.$store.state.currentAccount.slice(0, 8)
         } else{
             return 'Connect Wallet'
         }
+    }, 
+    // put this in the store
+    isEthereumSupported() {
+        return isEthereumSupported
     }
   },
   async beforeMount() {
@@ -88,13 +88,9 @@ export default {
     this.players = await raffle.methods.getAllPlayers().call();
     this.contractBalance = await web3.eth.getBalance(raffle.options.address);
     this.ticketPrice = await raffle.methods.ticketPrice().call();
-
-    await this.refreshAccounts();
+    this.$store.dispatch('fetchAccounts', web3)
   },
   methods: {
-    async refreshAccounts() {
-      this.connectedAccounts = await web3.eth.getAccounts();
-    },
     async getApproval() {
       this.loading = true;
       // TODO toast notification
@@ -130,8 +126,7 @@ export default {
       }
     },
     async connectWallet() {
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-      await this.refreshAccounts();
+      await web3.eth.requestAccounts();
     },
   },
 };

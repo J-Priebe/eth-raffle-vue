@@ -1,4 +1,4 @@
-import web3 from "../web3";
+import {web3} from "../web3";
 const address = process.env.VUE_APP_RAFFLE_CONTRACT_ADDRESS;
 const abi = [
   {
