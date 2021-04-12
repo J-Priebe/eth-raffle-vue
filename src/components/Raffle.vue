@@ -1,7 +1,6 @@
 <template>
 <div>
-    {{$store.state.currentAccount}}
-    <button @click="connectWallet" :disabled="isConnected || !isEthereumSupported">
+    <button @click="connectWallet" :disabled="isConnected || !isWalletInstalled">
         {{connectButtonText}}
     </button>
 
@@ -11,8 +10,8 @@
     </p>
     <p>
         Current Players:
-        <ol v-for="player in players" :key="player">
-            <li>{{player}}</li>
+        <ol v-for="(player, i) in players" :key="player.address + i">
+            <li>{{player.address}} ({{player.numTickets}} tickets)</li>
         </ol>
     </p>
     <p>
@@ -28,17 +27,15 @@
         </div>
         <button :disabled="loading">Enter</button>
     </form>
-    <button @click="pickWinner" :disabled="loading">Pick a Winner (manager only) </button>
+    <button v-show="isManager" @click="pickWinner" :disabled="loading">Pick a Winner (manager only) </button>
     </div>
 </div>
 </template>
 
 <script>
 import raffle from "../contracts/raffle";
-import {web3, isEthereumSupported} from "../web3"; 
-
-// TODO: callbacks (e.g., refresh the # players, etc), 
-// add raffle, lastWinner to contract, loading icons
+import {web3} from "../web3"; 
+import { mapActions, mapGetters } from 'vuex'
 
 export default {
   name: "Raffle",
@@ -53,6 +50,11 @@ export default {
     };
   },
   computed: {
+    ...mapGetters([
+      'currentAccount', 
+      'isConnected',
+      'isWalletInstalled',
+    ]),
     contractBalanceEther() {
       return web3.utils.fromWei(this.contractBalance, "ether");
     },
@@ -66,31 +68,39 @@ export default {
         "ether"
       );
     },
-    isConnected() {
-      return this.$store.state.currentAccount !==undefined;
-    },
     connectButtonText() {
-        if(!isEthereumSupported){
-            return 'Please install MetaMask or another wallet'
+      if(!this.isWalletInstalled){
+        return 'Please install MetaMask or another wallet'
         } else if (this.isConnected) {
-            return 'Connected to ' + this.$store.state.currentAccount.slice(0, 8)
+          return 'Connected to ' + this.currentAccount.slice(0, 8)
         } else{
-            return 'Connect Wallet'
+          return 'Connect Wallet'
         }
     }, 
-    // put this in the store
-    isEthereumSupported() {
-        return isEthereumSupported
+    isManager(){
+      return this.currentAccount === this.managerAddress;
     }
   },
   async beforeMount() {
     this.managerAddress = await raffle.methods.manager().call();
-    this.players = await raffle.methods.getAllPlayers().call();
+    
+    const tickets = await raffle.methods.getAllPlayerTicketCounts().call();
+    const players = await raffle.methods.getAllPlayerAddresses().call();
+    tickets.forEach((t, i)=>{
+      this.players.push({
+        address:players[i],
+        numTickets: t
+      })
+    });
+
     this.contractBalance = await web3.eth.getBalance(raffle.options.address);
     this.ticketPrice = await raffle.methods.ticketPrice().call();
-    this.$store.dispatch('fetchAccounts', web3)
+    this.fetchAccounts(web3)
   },
   methods: {
+    ...mapActions([
+      'fetchAccounts',
+    ]),
     async getApproval() {
       this.loading = true;
       // TODO toast notification
@@ -99,7 +109,7 @@ export default {
         const accounts = await web3.eth.getAccounts();
         const tx = await raffle.methods.enter().send({
           from: accounts[0],
-          value: this.ticketPrice,
+          value: this.ticketPrice * this.numTickets,
         });
         console.log("ok", tx);
       } catch {

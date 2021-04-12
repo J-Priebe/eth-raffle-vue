@@ -1,13 +1,20 @@
-import {web3} from "../web3";
+import { web3 } from "../web3";
 const address = process.env.VUE_APP_RAFFLE_CONTRACT_ADDRESS;
 const abi = [
   {
     inputs: [
-      { internalType: "int256", name: "ticketPriceWei", type: "int256" },
+      { internalType: "uint256", name: "ticketPriceWei", type: "uint256" },
     ],
     stateMutability: "nonpayable",
     type: "constructor",
     name: "constructor",
+  },
+  {
+    inputs: [],
+    name: "drawWinner",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
   },
   {
     inputs: [],
@@ -18,10 +25,24 @@ const abi = [
   },
   {
     inputs: [],
-    name: "getAllPlayers",
+    name: "getAllPlayerAddresses",
     outputs: [
       { internalType: "address payable[]", name: "", type: "address[]" },
     ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getAllPlayerTicketCounts",
+    outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "lastWinner",
+    outputs: [{ internalType: "address payable", name: "", type: "address" }],
     stateMutability: "view",
     type: "function",
   },
@@ -33,23 +54,23 @@ const abi = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "pickWinner",
-    outputs: [],
-    stateMutability: "nonpayable",
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "playerAddresses",
+    outputs: [{ internalType: "address payable", name: "", type: "address" }],
+    stateMutability: "view",
     type: "function",
   },
   {
     inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    name: "players",
-    outputs: [{ internalType: "address payable", name: "", type: "address" }],
+    name: "playerTicketCounts",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [],
     name: "ticketPrice",
-    outputs: [{ internalType: "int256", name: "", type: "int256" }],
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },

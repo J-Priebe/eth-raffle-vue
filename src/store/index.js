@@ -7,7 +7,12 @@ Vue.use(Vuex)
 export const store = new Vuex.Store({
   state: {
     currentAccount: undefined,
-    count: 0
+    isWalletInstalled: typeof window.ethereum !== "undefined",
+  },
+  getters: {
+    currentAccount: state => state.currentAccount,
+    isConnected: state => state.currentAccount !== undefined,
+    isWalletInstalled: state => state.isWalletInstalled,
   },
   actions: {
     fetchAccounts({commit}, web3) {
@@ -19,9 +24,6 @@ export const store = new Vuex.Store({
     }
   },
   mutations: {
-    increment (state) {
-      state.count++
-    },
     updateCurrentAccount(state, newAccount) {
       state.currentAccount = newAccount;
     }

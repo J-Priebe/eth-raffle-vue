@@ -1,5 +1,5 @@
 /*
-See metmask onboarding for a more fluid workflow.
+See metamask onboarding docs for a more fluid workflow.
 */
 
 import Web3 from "web3";
@@ -9,17 +9,13 @@ let plugin;
 
 const ethereum = window.ethereum;
 
-const isEthereumSupported = typeof ethereum !== "undefined";
-
 // use metamask or other wallet provider if they've got it installed
-if (isEthereumSupported) {
-  console.log("using metamask provider");
+if (typeof ethereum !== "undefined") {
   web3 = new Web3(ethereum);
-
+  
   // and define a store plugin for handling some events
   plugin = (store) => {
     ethereum.on('accountsChanged', (accounts) => {
-      console.log('calling updateCurrentAccount');
       store.commit('updateCurrentAccount', accounts[0]);
     });
     
@@ -40,4 +36,4 @@ if (isEthereumSupported) {
   plugin = () => {};
 }
 
-export { web3, plugin, isEthereumSupported };
+export { web3, plugin };
